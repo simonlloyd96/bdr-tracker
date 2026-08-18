@@ -1,0 +1,1718 @@
+<!doctype html>
+<html lang="en-AU" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#131D40">
+<title>BDR Performance · UiPath ANZ &amp; UKI</title>
+<style>
+:root{
+  color-scheme: light;
+  /* UiPath brand */
+  --brand:#FA4616;          /* UiPath orange */
+  --brand-ink:#C8360E;      /* orange, text-safe */
+  --brand-wash:#FFF1EC;
+  --navy:#131D40;
+  --navy-2:#1B2752;
+  --navy-3:#25325F;
+  --teal:#0BA2B3;
+  --violet:#4A3AA7;
+
+  /* chart series (validated: all-pairs CVD + normal-vision, light surface #FFF) */
+  --series-1:#FA4616;
+  --series-2:#0BA2B3;
+  --series-3:#4A3AA7;
+
+  /* status (fixed, never themed) */
+  --good:#0CA30C; --good-ink:#046904;
+  --warning:#FAB219; --warning-ink:#8A5D00;
+  --critical:#D03B3B; --critical-ink:#A62525;
+
+  /* surfaces & ink */
+  --surface:#FFFFFF;
+  --page:#F4F6F9;
+  --ink:#12161F;
+  --ink-2:#555D6E;
+  --muted:#848C9A;
+  --line:#E3E6EC;
+  --grid:#EDEFF3;
+  --axis:#CFD4DD;
+  --shadow:0 1px 2px rgba(18,22,31,.04), 0 8px 24px rgba(18,22,31,.05);
+  --radius:14px;
+  --sidebar:264px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--page); color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--brand-ink)}
+h1,h2,h3,h4{margin:0;letter-spacing:-.02em;font-weight:650}
+.kicker{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- shell ---------- */
+.shell{display:flex;min-height:100vh}
+.side{
+  width:var(--sidebar);flex:0 0 var(--sidebar);background:var(--navy);color:#E9ECF5;
+  position:fixed;inset:0 auto 0 0;display:flex;flex-direction:column;padding:20px 16px;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 8px 22px}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--brand);display:grid;place-items:center;flex:0 0 38px}
+.logo svg{width:21px;height:21px;display:block}
+.brand b{display:block;font-size:14.5px;font-weight:650;letter-spacing:-.01em}
+.brand small{display:block;color:#9AA4C2;font-size:11px;margin-top:1px}
+.nav{display:grid;gap:2px}
+.nav button{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:none;border:0;color:#A9B2CD;padding:10px 11px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:500;
+}
+.nav button:hover{background:var(--navy-2);color:#fff}
+.nav button[aria-current="page"]{background:var(--navy-3);color:#fff;font-weight:600}
+.nav .ic{width:17px;height:17px;flex:0 0 17px;opacity:.9}
+.nav .ic svg{width:100%;height:100%;display:block}
+.sidefoot{margin-top:auto;display:grid;gap:12px}
+.syncbox{background:var(--navy-2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px}
+.syncbox .row{display:flex;align-items:center;gap:8px}
+.syncdot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:0 0 8px}
+.syncdot.ok{background:var(--good)}
+.syncdot.warn{background:var(--warning)}
+.syncdot.err{background:var(--critical)}
+.syncbox b{font-size:12.5px;font-weight:600;color:#fff}
+.syncbox p{margin:6px 0 0;font-size:11.5px;color:#9AA4C2;line-height:1.45}
+.syncbox button{margin-top:10px;width:100%;background:var(--navy-3);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font-size:12.5px;font-weight:600;cursor:pointer}
+.syncbox button:hover{background:#2E3D70}
+.whoami{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px}
+.whoami:hover{background:var(--navy-2)}
+.whoami select{background:transparent;border:0;color:#fff;font-size:13px;font-weight:600;padding:0;width:100%;cursor:pointer}
+.whoami select option{color:#12161F}
+.whoami small{display:block;color:#9AA4C2;font-size:11px}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;flex:0 0 32px;background:var(--brand);color:#fff}
+.av.ghost{background:#E7EAF0;color:#7B8496}
+
+/* ---------- main ---------- */
+.main{margin-left:var(--sidebar);width:calc(100% - var(--sidebar));padding:26px 30px 60px;max-width:1520px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+.top h1{font-size:26px;margin:5px 0 5px}
+.top p{margin:0;color:var(--ink-2);font-size:14px;max-width:62ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn:hover{border-color:#C9CFDA;background:#FBFCFD}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-ink);border-color:var(--brand-ink)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:#EBEEF3}
+.btn.sm{padding:6px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn svg{width:15px;height:15px;display:block}
+
+/* filter row — one row above everything it scopes */
+.filters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px;box-shadow:var(--shadow)}
+.fld{display:grid;gap:5px}
+.fld label{font-size:11.5px;font-weight:650;color:var(--ink-2)}
+.fld input,.fld select,.fld textarea{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--surface);font-size:14px;min-height:38px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
+.fld .hint{font-size:11.5px;color:var(--muted)}
+.spacer{flex:1 1 auto}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
+.card.tight{padding:16px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.head h3{font-size:15.5px}
+.head .sub{font-size:12.5px;color:var(--muted);margin-top:2px;display:block}
+
+.grid{display:grid;gap:14px}
+.g-hero{grid-template-columns:1.35fr 1fr 1fr 1fr}
+.g-2{grid-template-columns:1.8fr 1fr;align-items:start}
+.g-2e{grid-template-columns:1fr 1fr}
+.g-3{grid-template-columns:repeat(3,1fr)}
+.mb{margin-bottom:14px}
+
+/* hero */
+.hero{display:flex;justify-content:space-between;gap:18px;align-items:center;background:linear-gradient(135deg,var(--navy) 0%,#1E2C5C 100%);color:#fff;border:0}
+.hero .kicker{color:#A9B2CD}
+.hero .figure{font-size:52px;font-weight:700;letter-spacing:-.045em;line-height:1;margin:9px 0 8px}
+.hero .figure.empty{font-size:30px;color:#8B96BC;letter-spacing:-.02em}
+.hero p{margin:0;color:#B6BEd6;font-size:12.8px;max-width:34ch;line-height:1.5}
+.dial{position:relative;width:112px;height:112px;flex:0 0 112px}
+.dial svg{transform:rotate(-90deg);display:block}
+.dial .lbl{position:absolute;inset:0;display:grid;place-items:center;font-size:17px;font-weight:700}
+
+/* stat tiles */
+.tile{display:flex;flex-direction:column;gap:2px}
+.tile .lab{font-size:12.5px;color:var(--ink-2);font-weight:550}
+.tile .val{font-size:29px;font-weight:680;letter-spacing:-.03em;margin:8px 0 0;line-height:1.1}
+.tile .val em{font-style:normal;font-size:15px;color:var(--muted);font-weight:550;letter-spacing:0}
+.tile .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:10px}
+.pct{font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.pct .ic{width:13px;height:13px;flex:0 0 13px}
+.pct.good{color:var(--good-ink)} .pct.warning{color:var(--warning-ink)} .pct.critical{color:var(--critical-ink)}
+.meter{height:6px;border-radius:99px;background:#EEF0F4;overflow:hidden;margin-top:10px}
+.meter i{display:block;height:100%;border-radius:99px;background:var(--brand);transition:width .35s ease}
+.meter i.good{background:var(--good)} .meter i.warning{background:var(--warning)} .meter i.critical{background:var(--critical)}
+.spark{margin-top:10px;height:26px}
+.spark svg{display:block;width:100%;height:26px;overflow:visible}
+
+/* charts */
+.chartwrap{position:relative}
+.chartwrap svg{display:block;width:100%;overflow:visible}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.swatch{width:11px;height:11px;border-radius:3px;display:inline-block;flex:0 0 11px}
+.swatch.line{height:2px;border-radius:2px;width:15px}
+.tip{
+  position:fixed;z-index:60;pointer-events:none;background:var(--navy);color:#fff;border-radius:9px;
+  padding:9px 11px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;transition:opacity .12s;max-width:230px;
+}
+.tip.show{opacity:1}
+.tip b{display:block;font-size:12px;color:#C4CBE2;font-weight:600;margin-bottom:3px}
+.tip .r{display:flex;justify-content:space-between;gap:14px}
+.tip .r i{font-style:normal;color:#C4CBE2}
+
+/* attainment rows */
+.att{display:grid;gap:13px}
+.att .r{display:grid;gap:6px}
+.att .l{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px}
+.att .l b{font-weight:650;font-variant-numeric:tabular-nums;font-size:13px}
+.att .l span{color:var(--ink-2)}
+
+/* table */
+.tablewrap{overflow-x:auto;margin:0 -20px -18px;padding:0 20px}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{padding:10px 12px;text-align:left;font-size:13px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;border-top:0;white-space:nowrap}
+td.name,th.name{font-variant-numeric:normal;white-space:nowrap}
+tbody tr:hover{background:#FAFBFC}
+td b{font-weight:650}
+.num{text-align:right}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:650;background:#EEF0F4;color:var(--ink-2)}
+.chip.good{background:#E7F6E7;color:var(--good-ink)}
+.chip.warning{background:#FDF3DE;color:var(--warning-ink)}
+.chip.critical{background:#FBE9E9;color:var(--critical-ink)}
+.chip.brand{background:var(--brand-wash);color:var(--brand-ink)}
+.pct.none{color:var(--muted)}
+.meter i.none{background:#D3D8E0}
+.chip .ic{width:12px;height:12px;flex:0 0 12px}
+
+/* log form */
+.logform{display:grid;gap:16px}
+.fieldset{border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.fieldset > legend{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--brand-ink);padding:0 8px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px}
+.numfield{display:grid;gap:6px}
+.numfield label{font-size:13px;font-weight:600}
+.stepper{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.stepper:focus-within{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
+.stepper button{width:40px;border:0;background:#F7F8FA;color:var(--ink-2);font-size:19px;font-weight:600;cursor:pointer;line-height:1}
+.stepper button:hover{background:#EDF0F4;color:var(--ink)}
+.stepper input{flex:1;min-width:0;border:0;text-align:center;padding:10px 4px;font-size:16px;font-weight:650;font-variant-numeric:tabular-nums;background:transparent}
+.stepper input:focus{outline:0}
+.stepper.money input{text-align:left;padding-left:12px}
+.numfield .hint{font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px}
+.numfield .hint > span{white-space:nowrap}
+.numfield .hint b{color:var(--ink-2);font-weight:650}
+.savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 16px;box-shadow:0 -2px 18px rgba(18,22,31,.06)}
+.savebar .msg{font-size:13px;color:var(--ink-2)}
+
+.confidence{display:flex;gap:8px;flex-wrap:wrap}
+.confidence button{width:44px;height:40px;border:1px solid var(--line);background:var(--surface);border-radius:9px;font-weight:650;cursor:pointer}
+.confidence button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* roster */
+.roster{display:grid;gap:10px}
+.rosteritem{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.rosteritem .grow{flex:1;min-width:0}
+.rosteritem b{display:block;font-size:14px}
+.rosteritem small{display:block;color:var(--muted);font-size:12px}
+.rosteritem.open{border-style:dashed;background:#FAFBFC}
+
+/* leaderboard */
+.lb{display:grid;gap:2px}
+.lbrow{display:grid;grid-template-columns:22px 34px 1fr auto;gap:11px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line)}
+.lbrow:last-child{border-bottom:0}
+.lbrow .rank{font-size:12.5px;color:var(--muted);font-weight:700;text-align:center}
+.lbrow .n b{display:block;font-size:13.5px}
+.lbrow .n small{display:block;color:var(--muted);font-size:11.5px}
+.lbrow .sc{font-size:17px;font-weight:700;letter-spacing:-.02em}
+
+/* notes */
+.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.notebox{border:1px solid var(--line);border-radius:12px;padding:14px;background:#FAFBFC}
+.notebox b{display:block;font-size:12.5px;margin-bottom:6px;color:var(--brand-ink);letter-spacing:.03em;text-transform:uppercase;font-size:11px}
+.notebox p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.55;white-space:pre-wrap}
+.notebox p.empty{color:var(--muted);font-style:italic}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(11,15,26,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:80}
+.modal.show{display:flex}
+.modalbox{background:var(--surface);border-radius:16px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:22px 24px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.modalbox h3{font-size:18px;margin-bottom:6px}
+.modalbox .lede{color:var(--ink-2);font-size:13.5px;margin:0 0 16px;line-height:1.55}
+.codebox{display:flex;gap:8px;align-items:center;background:#F4F6F9;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all}
+.codebox span{flex:1;min-width:0}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--navy);color:#fff;padding:12px 18px;border-radius:11px;font-size:13.5px;font-weight:550;box-shadow:0 12px 32px rgba(0,0,0,.24);opacity:0;pointer-events:none;transition:.22s;z-index:90;display:flex;align-items:center;gap:9px;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast .ic{width:16px;height:16px;flex:0 0 16px}
+
+.empty{text-align:center;padding:34px 18px;color:var(--muted)}
+.empty svg{width:34px;height:34px;opacity:.4;margin-bottom:10px}
+.empty p{margin:0 0 4px;font-size:13.5px}
+.view{display:none}
+.view.on{display:block}
+.note{font-size:12.5px;color:var(--muted);margin:12px 0 0;line-height:1.55}
+.callout{display:flex;gap:11px;background:var(--brand-wash);border:1px solid #FBD5C6;border-radius:12px;padding:13px 15px;font-size:13.5px;color:#8A3813;line-height:1.55}
+.callout svg{width:17px;height:17px;flex:0 0 17px;margin-top:1px}
+.callout.info{background:#EEF4FE;border-color:#CFE0FA;color:#1B3A66}
+
+@media (max-width:1180px){
+  .g-hero{grid-template-columns:1fr 1fr}
+  .g-2,.g-3{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  :root{--sidebar:0px}
+  .shell{display:block}
+  .side{position:sticky;top:0;width:100%;flex:none;inset:auto;z-index:50;padding:12px 14px;flex-direction:row;align-items:center;gap:12px;overflow:visible}
+  .brand{padding:0;flex:0 0 auto}
+  .brand .txt{display:none}
+  .nav{display:flex;overflow-x:auto;gap:4px;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{padding:8px 11px;font-size:13px;white-space:nowrap}
+  .nav .lbl{display:none}
+  .nav button[aria-current="page"] .lbl{display:inline}
+  .sidefoot{margin:0;flex:0 0 auto}
+  .syncbox{padding:0;background:none;border:0}
+  .syncbox p,.syncbox button,.syncbox b{display:none}
+  .whoami{display:none}
+  .main{margin:0;width:100%;padding:18px 14px 48px}
+  .g-hero,.g-2e,.notegrid{grid-template-columns:1fr}
+  .top h1{font-size:22px}
+  .hero{flex-direction:column;align-items:flex-start}
+  .tablewrap{margin:0 -16px -16px;padding:0 16px}
+}
+@media print{
+  .side,.actions,.filters,.savebar{display:none!important}
+  .main{margin:0;width:100%;padding:0}
+  .card{break-inside:avoid;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<!-- ================= SIDEBAR ================= -->
+<aside class="side">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v9.2A6.8 6.8 0 0 0 10.8 20H12V4h-3.4v12.6h-.8A3.4 3.4 0 0 1 7.4 13.2V4H4Z" fill="#fff"/><rect x="15.4" y="8" width="3.4" height="12" rx=".4" fill="#fff"/><circle cx="17.1" cy="5.3" r="1.9" fill="#fff"/></svg>
+    </div>
+    <div class="txt">
+      <b>BDR Performance</b>
+      <small>UiPath ANZ &amp; UKI</small>
+    </div>
+  </div>
+
+  <nav class="nav" id="nav" aria-label="Sections">
+    <button data-view="log" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><span class="lbl">Log results</span></button>
+    <button data-view="dash"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span class="lbl">Dashboard</span></button>
+    <button data-view="week"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span><span class="lbl">Weekly review</span></button>
+    <button data-view="team"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 5.2a3.4 3.4 0 0 1 0 6.6M17.5 14.2A6.5 6.5 0 0 1 21.5 20"/></svg></span><span class="lbl">Team</span></button>
+    <button data-view="targets"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg></span><span class="lbl">Targets</span></button>
+    <button data-view="data"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3.2"/><path d="M4 6v12c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2V6M4 12c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2"/></svg></span><span class="lbl">Data &amp; sharing</span></button>
+  </nav>
+
+  <div class="sidefoot">
+    <div class="syncbox">
+      <div class="row"><span class="syncdot" id="syncDot"></span><b id="syncLabel">This device only</b></div>
+      <p id="syncNote">Your entries are saved on this device. Connect a team code to share them.</p>
+      <button id="syncBtn" type="button">Set up sharing</button>
+    </div>
+    <div class="whoami">
+      <div class="av" id="meAv">?</div>
+      <div style="flex:1;min-width:0">
+        <small>Logging as</small>
+        <select id="meSelect" aria-label="Who is using this device"></select>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ================= LOG RESULTS ================= -->
+<section class="view on" id="view-log">
+  <header class="top">
+    <div>
+      <div class="kicker" id="logKicker">Daily log</div>
+      <h1>Log today's results</h1>
+      <p>Takes about 60 seconds. Numbers save the moment you hit save, and roll straight into the weekly review.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="logYesterday" type="button">Yesterday</button>
+      <button class="btn" id="logToday" type="button">Today</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="fld"><label for="logBdr">BDR</label><select id="logBdr"></select></div>
+    <div class="fld"><label for="logDate">Date</label><input type="date" id="logDate"></div>
+    <div class="spacer"></div>
+    <div class="fld"><label>&nbsp;</label><span class="chip" id="logStatus">New entry</span></div>
+  </div>
+
+  <div class="logform">
+    <fieldset class="fieldset">
+      <legend>Outbound activity</legend>
+      <div class="numgrid" id="grpActivity"></div>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend>Outcomes</legend>
+      <div class="numgrid" id="grpOutcomes"></div>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend>Coverage</legend>
+      <div class="numgrid" id="grpCoverage"></div>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend>Note for the day <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--muted)">— optional</span></legend>
+      <div class="fld"><textarea id="logNote" rows="2" placeholder="Anything worth remembering — a good conversation, a blocker, a callback to chase."></textarea></div>
+    </fieldset>
+
+    <div class="savebar">
+      <button class="btn primary" id="saveDay" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Save day</button>
+      <button class="btn ghost" id="clearDay" type="button">Reset form</button>
+      <span class="msg" id="saveMsg"></span>
+      <div class="spacer"></div>
+      <span class="chip brand" id="dayScore">—</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DASHBOARD ================= -->
+<section class="view" id="view-dash">
+  <header class="top">
+    <div>
+      <div class="kicker" id="dashKicker">Week commencing</div>
+      <h1>Performance cockpit</h1>
+      <p>Attainment against weekly targets for calls, conversations, meetings, opportunities and pipeline.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="exportWeek" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/></svg>Export CSV</button>
+      <button class="btn primary" data-goto="log" type="button">+ Log results</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="fld"><label for="dashBdr">BDR</label><select id="dashBdr"></select></div>
+    <div class="fld"><label for="dashWeek">Week commencing</label><select id="dashWeek"></select></div>
+    <div class="spacer"></div>
+    <div class="fld"><label for="dashMetric">Chart metric</label><select id="dashMetric"></select></div>
+  </div>
+
+  <div class="grid g-hero mb">
+    <div class="card hero">
+      <div>
+        <div class="kicker">Weighted score</div>
+        <div class="figure" id="heroScore">—</div>
+        <p id="heroNote">No results logged for this week yet.</p>
+      </div>
+      <div class="dial" id="heroDial"></div>
+    </div>
+    <div class="card tile" id="tileMeetings"></div>
+    <div class="card tile" id="tileOpps"></div>
+    <div class="card tile" id="tilePipeline"></div>
+  </div>
+
+  <div class="grid g-2 mb">
+    <div class="card">
+      <div class="head">
+        <div><h3 id="chartTitle">This week, by day</h3><span class="sub" id="chartSub">Actual per day against the daily pace needed to hit target</span></div>
+      </div>
+      <div class="chartwrap" id="chartDaily"></div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--series-1)"></i>Actual</span>
+        <span><i class="swatch line" style="background:var(--axis)"></i>Daily pace to target</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="head"><div><h3>Attainment</h3><span class="sub">Week to date vs weekly target</span></div></div>
+      <div class="att" id="attList"></div>
+    </div>
+  </div>
+
+  <div class="grid g-2 mb">
+    <div class="card">
+      <div class="head"><div><h3 id="trendTitle">Week on week</h3><span class="sub" id="trendSub">Last 8 weeks</span></div></div>
+      <div class="chartwrap" id="chartTrend"></div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--series-1)"></i>Actual</span>
+        <span><i class="swatch line" style="background:var(--axis)"></i>Weekly target</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="head"><div><h3>Leaderboard</h3><span class="sub">Weighted score, selected week</span></div></div>
+      <div class="lb" id="leaderboard"></div>
+      <p class="note">Open seats appear here as soon as a BDR is added on the Team page.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head"><div><h3>Daily detail</h3><span class="sub" id="detailSub">Every entry logged in the selected week</span></div>
+      <button class="btn sm" id="toggleTable" type="button">Hide table</button>
+    </div>
+    <div class="tablewrap"><table id="dailyTable"></table></div>
+  </div>
+</section>
+
+<!-- ================= WEEKLY REVIEW ================= -->
+<section class="view" id="view-week">
+  <header class="top">
+    <div>
+      <div class="kicker">Weekly review</div>
+      <h1>Week in review</h1>
+      <p>The weekly wrap-up: what the numbers did, what worked, what got in the way and what changes next week.</p>
+    </div>
+    <div class="actions"><button class="btn" id="exportAll" type="button">Export all weeks (CSV)</button></div>
+  </header>
+
+  <div class="filters">
+    <div class="fld"><label for="weekBdr">BDR</label><select id="weekBdr"></select></div>
+    <div class="fld"><label for="weekPick">Week commencing</label><select id="weekPick"></select></div>
+    <div class="spacer"></div>
+    <div class="fld"><label>&nbsp;</label><span class="chip" id="weekScoreChip">—</span></div>
+  </div>
+
+  <div class="card mb">
+    <div class="head"><div><h3>Weekly numbers</h3><span class="sub">Actual vs target, with the score contribution of each metric</span></div></div>
+    <div class="tablewrap"><table id="weekTable"></table></div>
+  </div>
+
+  <div class="card mb">
+    <div class="head"><div><h3>Reflections</h3><span class="sub">Filled in by the BDR at the end of the week</span></div></div>
+    <div class="logform">
+      <div class="grid g-2e">
+        <div class="fld"><label for="nWorked">What worked</label><textarea id="nWorked" rows="3" placeholder="Which messages, lists or times of day produced conversations?"></textarea></div>
+        <div class="fld"><label for="nBlocker">Biggest blocker</label><textarea id="nBlocker" rows="3" placeholder="What slowed you down or stopped you hitting target?"></textarea></div>
+        <div class="fld"><label for="nChange">Change for next week</label><textarea id="nChange" rows="3" placeholder="One specific, testable change."></textarea></div>
+        <div class="fld"><label for="nPriority">Priority / focus</label><textarea id="nPriority" rows="3" placeholder="Accounts, campaign or event to push on."></textarea></div>
+      </div>
+      <div class="fld">
+        <label>Confidence in hitting next week's target</label>
+        <div class="confidence" id="confidence" role="group" aria-label="Confidence out of 5"></div>
+      </div>
+      <div class="savebar">
+        <button class="btn primary" id="saveWeek" type="button">Save weekly review</button>
+        <span class="msg" id="weekMsg"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head"><div><h3>Previous reviews</h3><span class="sub">Most recent first</span></div></div>
+    <div id="pastNotes"></div>
+  </div>
+</section>
+
+<!-- ================= TEAM ================= -->
+<section class="view" id="view-team">
+  <header class="top">
+    <div>
+      <div class="kicker">Team</div>
+      <h1>BDR roster</h1>
+      <p>Wai is live today. Add each new hire here as they start — targets, dashboards and the leaderboard pick them up automatically.</p>
+    </div>
+    <div class="actions"><button class="btn primary" id="addBdr" type="button">+ Add BDR</button></div>
+  </header>
+
+  <div class="grid g-2 mb">
+    <div class="card">
+      <div class="head"><div><h3>Roster</h3><span class="sub">Active BDRs and open seats</span></div></div>
+      <div class="roster" id="roster"></div>
+    </div>
+    <div class="card">
+      <div class="head"><div><h3>Team totals</h3><span class="sub" id="teamSub">Selected week</span></div></div>
+      <div class="att" id="teamTotals"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head"><div><h3>All-time by BDR</h3><span class="sub">Every week logged</span></div></div>
+    <div class="tablewrap"><table id="teamTable"></table></div>
+  </div>
+</section>
+
+<!-- ================= TARGETS ================= -->
+<section class="view" id="view-targets">
+  <header class="top">
+    <div>
+      <div class="kicker">Targets</div>
+      <h1>Weekly targets &amp; scoring</h1>
+      <p>Set the weekly target for each metric and how much it counts toward the weighted score. Changes apply to every BDR and every week.</p>
+    </div>
+    <div class="actions"><button class="btn" id="resetTargets" type="button">Restore defaults</button><button class="btn primary" id="saveTargets" type="button">Save targets</button></div>
+  </header>
+
+  <div class="callout info mb">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4.5M12 8h.01"/></svg>
+    <div>The weighted score is each metric's attainment (capped at 100%) multiplied by its weight. Weights are normalised, so they don't have to add up to exactly 100.</div>
+  </div>
+
+  <div class="card mb">
+    <div class="head"><div><h3>Targets and weights</h3><span class="sub">Per BDR, per week</span></div><span class="chip" id="weightSum">—</span></div>
+    <div class="tablewrap"><table id="targetTable"></table></div>
+  </div>
+
+  <div class="card">
+    <div class="head"><div><h3>Working days per week</h3><span class="sub">Used to work out the daily pace needed to hit target</span></div></div>
+    <div class="fld" style="max-width:220px"><label for="workdays">Selling days</label><input type="number" id="workdays" min="1" max="7" step="1"></div>
+  </div>
+</section>
+
+<!-- ================= DATA ================= -->
+<section class="view" id="view-data">
+  <header class="top">
+    <div>
+      <div class="kicker">Data &amp; sharing</div>
+      <h1>Sharing, backup and export</h1>
+      <p>Set up a shared workspace so Wai's entries appear on your dashboard, and keep a backup you control.</p>
+    </div>
+  </header>
+
+  <div class="grid g-2 mb">
+    <div class="card">
+      <div class="head"><div><h3>Shared workspace</h3><span class="sub">One team code, shared by everyone who uses this tracker</span></div></div>
+      <div id="syncPanel"></div>
+    </div>
+    <div class="card">
+      <div class="head"><div><h3>Backup &amp; restore</h3><span class="sub">A file you keep, independent of any service</span></div></div>
+      <div class="actions" style="margin-bottom:14px">
+        <button class="btn" id="dlJson" type="button">Download backup (JSON)</button>
+        <button class="btn" id="upJson" type="button">Restore from backup</button>
+        <input type="file" id="fileJson" accept="application/json,.json" class="sr">
+      </div>
+      <p class="note">Restoring merges the backup into what's already here — nothing is deleted. Use this if the shared workspace is ever unavailable: whoever has the numbers exports, the other person restores.</p>
+      <div class="head" style="margin-top:20px"><div><h3>Export to CSV</h3><span class="sub">Opens in Excel</span></div></div>
+      <div class="actions">
+        <button class="btn" id="csvDaily" type="button">Daily entries</button>
+        <button class="btn" id="csvWeekly" type="button">Weekly roll-up</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head"><div><h3>Danger zone</h3><span class="sub">Applies to this device</span></div></div>
+    <div class="actions">
+      <button class="btn" id="disconnect" type="button">Disconnect from shared workspace</button>
+      <button class="btn" id="wipe" type="button" style="color:var(--critical-ink);border-color:#F0C9C9">Erase all local data</button>
+    </div>
+    <p class="note">Erasing local data does not remove anything from the shared workspace. Take a backup first if you're unsure.</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="modal" id="modal"><div class="modalbox" id="modalBox"></div></div>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   BDR Performance Tracker — UiPath ANZ & UKI
+   Single file. Local-first storage, optional shared workspace via team code.
+   ========================================================================= */
+
+/* ---------------- metric definitions ---------------- */
+const METRICS = [
+  {key:'calls',         label:'Calls made',              short:'Calls',         group:'activity', target:350,    weight:10},
+  {key:'conversations', label:'Connected conversations', short:'Conversations', group:'activity', target:50,     weight:15},
+  {key:'emails',        label:'Emails sent',             short:'Emails',        group:'activity', target:250,    weight:5},
+  {key:'linkedin',      label:'LinkedIn connections',    short:'LinkedIn',      group:'activity', target:100,    weight:5},
+  {key:'inmails',       label:'InMails / voice notes',   short:'InMails',       group:'activity', target:100,    weight:5},
+  {key:'meetings',      label:'Meetings booked',         short:'Meetings',      group:'outcomes', target:4,      weight:25},
+  {key:'meetingsHeld',  label:'Meetings held',           short:'Held',          group:'outcomes', target:3,      weight:10},
+  {key:'opportunities', label:'Opportunities created',   short:'Opportunities', group:'outcomes', target:2,      weight:10},
+  {key:'pipeline',      label:'Pipeline created',        short:'Pipeline',      group:'outcomes', target:150000, weight:10, money:true, step:5000},
+  {key:'prospects',     label:'Prospects added',         short:'Prospects',     group:'coverage', target:50,     weight:3},
+  {key:'accounts',      label:'Accounts touched',        short:'Accounts',      group:'coverage', target:30,     weight:2}
+];
+const MKEY = Object.fromEntries(METRICS.map(m=>[m.key,m]));
+const DEFAULT_TARGETS = Object.fromEntries(METRICS.map(m=>[m.key,m.target]));
+const DEFAULT_WEIGHTS = Object.fromEntries(METRICS.map(m=>[m.key,m.weight]));
+const STORE_KEY = 'uipath.bdr.v1';
+const PREF_KEY  = 'uipath.bdr.prefs.v1';
+
+/* ---------------- small utils ---------------- */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const now = () => Date.now();
+const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
+const uid = () => 'x'+Math.random().toString(36).slice(2,9)+now().toString(36).slice(-4);
+
+function ymd(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd}
+function parseYmd(s){const p=String(s).split('-').map(Number);return new Date(p[0],p[1]-1,p[2])}
+function addDays(s,n){const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)}
+function weekStartOf(s){const d=parseYmd(s);const off=(d.getDay()+6)%7;d.setDate(d.getDate()-off);return ymd(d)}
+function todayStr(){return ymd(new Date())}
+const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+function prettyDate(s){const d=parseYmd(s);return d.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}
+function prettyDateFull(s){const d=parseYmd(s);return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+function prettyWeek(s){return 'w/c '+parseYmd(s).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}
+
+function fmt(n){n=Number(n)||0;return n.toLocaleString('en-AU',{maximumFractionDigits:0})}
+function money(n){
+  n = Number(n)||0;
+  if(Math.abs(n)>=1e6) return 'A$'+(n/1e6).toFixed(n%1e6===0?0:1)+'M';
+  if(Math.abs(n)>=1e4) return 'A$'+Math.round(n/1e3)+'k';
+  return 'A$'+fmt(n);
+}
+function moneyFull(n){return 'A$'+fmt(n)}
+function fmtMetric(k,v){return MKEY[k]&&MKEY[k].money?money(v):fmt(v)}
+function pctText(p){p=Number(p)||0;if(p===0)return '0%';if(p>0&&p<10)return p.toFixed(1)+'%';return Math.round(p)+'%'}
+function band(p){return p>=95?'good':p>=70?'warning':'critical'}
+function initials(name){
+  const parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return '?';
+  return (parts[0][0]+(parts.length>1?parts[parts.length-1][0]:'')).toUpperCase();
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+const ICON = {
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5v5M12 17h.01"/><circle cx="12" cy="12" r="9.2"/></svg>',
+  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 12h12"/></svg>'
+};
+function statusIcon(b){return b==='good'?ICON.check:b==='warning'?ICON.alert:ICON.alert}
+
+/* ---------------- state ---------------- */
+function blankState(){
+  return {
+    v:1,
+    bdrs:[
+      {id:'wai', name:'Wai', role:'BDR — ANZ', active:true, updatedAt:0},
+      {id:'seat2', name:'Open seat 2', role:'To be hired', active:false, updatedAt:0},
+      {id:'seat3', name:'Open seat 3', role:'To be hired', active:false, updatedAt:0},
+      {id:'seat4', name:'Open seat 4', role:'To be hired', active:false, updatedAt:0}
+    ],
+    settings:{targets:{...DEFAULT_TARGETS}, weights:{...DEFAULT_WEIGHTS}, workdays:5, updatedAt:0},
+    entries:{},
+    reviews:{}
+  };
+}
+let S = blankState();
+let PREFS = {me:'', code:'', lastPull:0};
+
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ const p = JSON.parse(raw); if(p && p.v) S = normalise(p); }
+  }catch(e){ console.warn('local load failed',e); }
+  try{
+    const raw = localStorage.getItem(PREF_KEY);
+    if(raw) PREFS = Object.assign(PREFS, JSON.parse(raw)||{});
+  }catch(e){}
+}
+function normalise(p){
+  const b = blankState();
+  const out = {
+    v:1,
+    bdrs: Array.isArray(p.bdrs)&&p.bdrs.length ? p.bdrs : b.bdrs,
+    settings: Object.assign({}, b.settings, p.settings||{}),
+    entries: p.entries&&typeof p.entries==='object' ? p.entries : {},
+    reviews: p.reviews&&typeof p.reviews==='object' ? p.reviews : {}
+  };
+  out.settings.targets = Object.assign({}, DEFAULT_TARGETS, out.settings.targets||{});
+  out.settings.weights = Object.assign({}, DEFAULT_WEIGHTS, out.settings.weights||{});
+  out.settings.workdays = clamp(Number(out.settings.workdays)||5,1,7);
+  return out;
+}
+function saveLocal(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+  catch(e){ toast('Could not save locally — storage may be full or blocked.','critical'); }
+}
+function savePrefs(){ try{ localStorage.setItem(PREF_KEY, JSON.stringify(PREFS)); }catch(e){} }
+
+/* ---------------- merge (last write wins per record) ---------------- */
+function mergeState(local, remote){
+  if(!remote || typeof remote!=='object') return local;
+  const out = {v:1, bdrs:[], settings:null, entries:{}, reviews:{}};
+
+  const byId = new Map();
+  (local.bdrs||[]).forEach(x=>byId.set(x.id,x));
+  (remote.bdrs||[]).forEach(x=>{
+    const cur = byId.get(x.id);
+    if(!cur || (Number(x.updatedAt)||0) > (Number(cur.updatedAt)||0)) byId.set(x.id,x);
+  });
+  out.bdrs = Array.from(byId.values()).filter(x=>!x.deleted);
+  if(!out.bdrs.length) out.bdrs = blankState().bdrs;
+
+  const ls = local.settings||{}, rs = remote.settings||{};
+  out.settings = (Number(rs.updatedAt)||0) > (Number(ls.updatedAt)||0) ? rs : ls;
+  out.settings = Object.assign({}, blankState().settings, out.settings);
+  out.settings.targets = Object.assign({}, DEFAULT_TARGETS, out.settings.targets||{});
+  out.settings.weights = Object.assign({}, DEFAULT_WEIGHTS, out.settings.weights||{});
+
+  ['entries','reviews'].forEach(coll=>{
+    const a = local[coll]||{}, b = remote[coll]||{};
+    const keys = new Set(Object.keys(a).concat(Object.keys(b)));
+    keys.forEach(k=>{
+      const x=a[k], y=b[k];
+      if(!x){ out[coll][k]=y; return; }
+      if(!y){ out[coll][k]=x; return; }
+      out[coll][k] = (Number(y.updatedAt)||0) > (Number(x.updatedAt)||0) ? y : x;
+    });
+    Object.keys(out[coll]).forEach(k=>{ if(out[coll][k] && out[coll][k].deleted) delete out[coll][k]; });
+  });
+  return out;
+}
+
+/* ---------------- shared workspace (team code) ---------------- */
+const PROVIDERS = {
+  ec:{
+    label:'JSON Storage',
+    async create(p){
+      const r = await fetch('https://api.extendsclass.com/json-storage/bin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      if(!j || !j.id) throw new Error('no id returned');
+      return j.id;
+    },
+    async read(id){
+      const r = await fetch('https://api.extendsclass.com/json-storage/bin/'+encodeURIComponent(id),{cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    },
+    async write(id,p){
+      const r = await fetch('https://api.extendsclass.com/json-storage/bin/'+encodeURIComponent(id),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+    }
+  },
+  jb:{
+    label:'JSONBlob',
+    async create(p){
+      const r = await fetch('https://jsonblob.com/api/jsonBlob',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(p)});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const loc = r.headers.get('Location') || r.headers.get('location');
+      if(!loc) throw new Error('location header not readable');
+      return String(loc).split('/').filter(Boolean).pop();
+    },
+    async read(id){
+      const r = await fetch('https://jsonblob.com/api/jsonBlob/'+encodeURIComponent(id),{cache:'no-store',headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    },
+    async write(id,p){
+      const r = await fetch('https://jsonblob.com/api/jsonBlob/'+encodeURIComponent(id),{method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(p)});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+    }
+  }
+};
+function parseCode(code){
+  const c = String(code||'').trim();
+  const i = c.indexOf('-');
+  if(i<1) return null;
+  const prov = c.slice(0,i), id = c.slice(i+1);
+  if(!PROVIDERS[prov] || !id) return null;
+  return {prov, id};
+}
+let SYNC = {state:'off', msg:'', busy:false, lastOk:0};
+function setSync(state, msg){ SYNC.state=state; SYNC.msg=msg||''; renderSyncBadge(); }
+
+async function createWorkspace(){
+  const errs = [];
+  for(const prov of ['ec','jb']){
+    try{
+      const id = await PROVIDERS[prov].create(payload());
+      return prov+'-'+id;
+    }catch(e){ errs.push(PROVIDERS[prov].label+': '+e.message); }
+  }
+  throw new Error(errs.join(' · '));
+}
+function payload(){ return {app:'uipath-bdr', v:1, savedAt:now(), data:S}; }
+function unwrap(j){ return j && j.data ? j.data : j; }
+
+async function pull(silent){
+  const c = parseCode(PREFS.code); if(!c) return;
+  if(SYNC.busy) return; SYNC.busy=true; setSync('syncing','Checking for updates…');
+  try{
+    const remote = unwrap(await PROVIDERS[c.prov].read(c.id));
+    S = mergeState(S, remote); saveLocal();
+    SYNC.lastOk = now(); setSync('ok','');
+    renderAll();
+  }catch(e){
+    setSync('err', e.message);
+    if(!silent) toast('Could not reach the shared workspace: '+e.message,'critical');
+  }finally{ SYNC.busy=false; }
+}
+async function push(silent){
+  const c = parseCode(PREFS.code); if(!c) return;
+  if(SYNC.busy) return; SYNC.busy=true; setSync('syncing','Sending your changes…');
+  try{
+    let remote = null;
+    try{ remote = unwrap(await PROVIDERS[c.prov].read(c.id)); }catch(e){ remote = null; }
+    if(remote) { S = mergeState(S, remote); }
+    await PROVIDERS[c.prov].write(c.id, payload());
+    saveLocal(); SYNC.lastOk = now(); setSync('ok','');
+    renderAll();
+  }catch(e){
+    setSync('err', e.message);
+    if(!silent) toast('Saved on this device, but the shared copy did not update: '+e.message,'warning');
+  }finally{ SYNC.busy=false; }
+}
+function scheduleSync(){ if(parseCode(PREFS.code)) push(true); }
+
+/* ---------------- computation ---------------- */
+function entryKey(b,d){return b+'|'+d}
+function activeBdrs(){return S.bdrs.filter(b=>b.active)}
+function bdr(id){return S.bdrs.find(b=>b.id===id)}
+function entriesFor(bdrId, weekStart){
+  const out=[];
+  for(let i=0;i<7;i++){
+    const d = addDays(weekStart,i);
+    const e = S.entries[entryKey(bdrId,d)];
+    out.push({date:d, dow:DOW[i], entry:e||null});
+  }
+  return out;
+}
+function weekTotals(bdrId, weekStart){
+  const t = Object.fromEntries(METRICS.map(m=>[m.key,0]));
+  let days = 0;
+  entriesFor(bdrId,weekStart).forEach(d=>{
+    if(!d.entry) return;
+    days++;
+    METRICS.forEach(m=>{ t[m.key] += Number(d.entry[m.key])||0; });
+  });
+  t._days = days;
+  return t;
+}
+function attainment(totals){
+  const T = S.settings.targets;
+  const out = {};
+  METRICS.forEach(m=>{
+    const tgt = Number(T[m.key])||0;
+    out[m.key] = tgt>0 ? (Number(totals[m.key])||0)/tgt*100 : (Number(totals[m.key])>0?100:0);
+  });
+  return out;
+}
+function weightedScore(totals){
+  const W = S.settings.weights, T = S.settings.targets;
+  let num=0, den=0;
+  METRICS.forEach(m=>{
+    const w = Number(W[m.key])||0; if(w<=0) return;
+    const tgt = Number(T[m.key])||0; if(tgt<=0) return;
+    const att = clamp((Number(totals[m.key])||0)/tgt*100, 0, 100);
+    num += att*w; den += w;
+  });
+  return den>0 ? num/den : 0;
+}
+function loggedWeeks(bdrId){
+  const set = new Set();
+  Object.values(S.entries).forEach(e=>{ if(!bdrId || e.bdrId===bdrId) set.add(weekStartOf(e.date)); });
+  Object.values(S.reviews).forEach(r=>{ if(!bdrId || r.bdrId===bdrId) set.add(r.week); });
+  set.add(weekStartOf(todayStr()));
+  return Array.from(set).sort().reverse();
+}
+function recentWeeks(n){
+  const cur = weekStartOf(todayStr());
+  const out=[];
+  for(let i=n-1;i>=0;i--) out.push(addDays(cur,-7*i));
+  return out;
+}
+
+/* ---------------- chart primitives ---------------- */
+const SVGNS='http://www.w3.org/2000/svg';
+function niceScale(max){
+  if(!(max>0)) return {max:1, ticks:[0,1]};
+  const raw = max/4;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw/mag;
+  const step = (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*mag;
+  const top = Math.ceil(max/step)*step;
+  const ticks=[]; for(let v=0; v<=top+step*0.001; v+=step) ticks.push(Math.round(v*1000)/1000);
+  return {max:top, ticks};
+}
+function tickLabel(v, isMoney){
+  if(isMoney){
+    if(Math.abs(v)>=1e6) return '$'+(v/1e6).toFixed(v%1e6?1:0)+'M';
+    if(Math.abs(v)>=1e3) return '$'+Math.round(v/1e3)+'k';
+    return '$'+v;
+  }
+  if(Math.abs(v)>=1e6) return (v/1e6).toFixed(v%1e6?1:0)+'M';
+  if(Math.abs(v)>=1000) return (v/1000).toFixed(v%1000?1:0)+'k';
+  return String(v);
+}
+function barPath(x,yTop,w,h,r){
+  r = Math.max(0, Math.min(r, w/2, h));
+  return 'M'+x+','+(yTop+h)+' L'+x+','+(yTop+r)+' Q'+x+','+yTop+' '+(x+r)+','+yTop+
+         ' L'+(x+w-r)+','+yTop+' Q'+(x+w)+','+yTop+' '+(x+w)+','+(yTop+r)+' L'+(x+w)+','+(yTop+h)+' Z';
+}
+function el(tag,attrs,txt){
+  const n=document.createElementNS(SVGNS,tag);
+  for(const k in attrs) n.setAttribute(k,attrs[k]);
+  if(txt!=null) n.textContent=txt;
+  return n;
+}
+const tipEl = () => document.getElementById('tip');
+function showTip(evt, html){
+  const t=tipEl(); t.innerHTML=html; t.classList.add('show'); moveTip(evt);
+}
+function moveTip(evt){
+  const t=tipEl(); const r=t.getBoundingClientRect();
+  let x = evt.clientX + 14, y = evt.clientY - r.height - 12;
+  if(x + r.width > window.innerWidth - 10) x = evt.clientX - r.width - 14;
+  if(y < 8) y = evt.clientY + 18;
+  t.style.left = Math.max(8,x)+'px'; t.style.top = Math.max(8,y)+'px';
+}
+function hideTip(){ tipEl().classList.remove('show'); }
+
+function drawColumns(host, rows, opts){
+  opts = opts||{};
+  host.innerHTML='';
+  const W = Math.max(300, host.clientWidth||600);
+  const H = opts.height||248;
+  const m = {l:52,r:12,t:16,b:30};
+  const iw = W-m.l-m.r, ih = H-m.t-m.b;
+  const tgt = Number(opts.target)||0;
+  const sc = niceScale(Math.max(...rows.map(r=>Number(r.value)||0), tgt, 1));
+  const yOf = v => m.t + ih - (v/sc.max)*ih;
+  const bandW = iw/Math.max(1,rows.length);
+  const bw = Math.min(24, Math.max(8, bandW*0.46));
+
+  const svg = el('svg',{viewBox:'0 0 '+W+' '+H,width:W,height:H,role:'img','aria-label':opts.aria||'Column chart'});
+
+  sc.ticks.forEach(v=>{
+    svg.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:yOf(v),y2:yOf(v),stroke:v===0?'#CFD4DD':'#EDEFF3','stroke-width':1}));
+    const t=el('text',{x:m.l-9,y:yOf(v)+4,'text-anchor':'end','font-size':11,fill:'#848C9A','font-variant-numeric':'tabular-nums'},tickLabel(v,opts.money));
+    svg.appendChild(t);
+  });
+
+  const widest = Math.max(...rows.map(r=>String(r.label).length))*6.3;
+  const stride = Math.max(1, Math.ceil((widest+8)/Math.max(1,bandW)));
+  rows.forEach((r,i)=>{
+    const v = Number(r.value)||0;
+    const cx = m.l + bandW*i + bandW/2;
+    const x = cx - bw/2;
+    if(v>0){
+      const h = Math.max(2, m.t+ih-yOf(v));
+      svg.appendChild(el('path',{d:barPath(x,yOf(v),bw,h,4),fill:r.color||'var(--series-1)'}));
+    }
+    if((rows.length-1-i) % stride === 0){
+      svg.appendChild(el('text',{x:cx,y:H-10,'text-anchor':'middle','font-size':11,fill:r.dim?'#B4BAC5':'#848C9A'}, r.label));
+    }
+  });
+
+  if(tgt>0){
+    const y = yOf(tgt);
+    svg.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:y,y2:y,stroke:'#98A1B0','stroke-width':2,'stroke-linecap':'round'}));
+  }
+
+  rows.forEach((r,i)=>{
+    const hit = el('rect',{x:m.l+bandW*i,y:m.t,width:bandW,height:ih,fill:'transparent'});
+    hit.style.cursor='default';
+    const html = '<b>'+esc(r.tip||r.label)+'</b>'+
+      '<div class="r"><i>'+esc(opts.name||'Actual')+'</i><span>'+esc(opts.fmt?opts.fmt(r.value):fmt(r.value))+'</span></div>'+
+      (tgt>0?'<div class="r"><i>'+esc(opts.targetName||'Target')+'</i><span>'+esc(opts.fmt?opts.fmt(tgt):fmt(tgt))+'</span></div>':'')+
+      (r.note?'<div class="r"><i>'+esc(r.note)+'</i></div>':'');
+    hit.addEventListener('mouseenter',e=>showTip(e,html));
+    hit.addEventListener('mousemove',moveTip);
+    hit.addEventListener('mouseleave',hideTip);
+    svg.appendChild(hit);
+  });
+  host.appendChild(svg);
+}
+
+function drawSpark(host, values, opts){
+  opts=opts||{}; host.innerHTML='';
+  const W = Math.max(60, host.clientWidth||140), H = 26, pad=3;
+  if(!values.length){ return; }
+  const max = Math.max(1, ...values), min = 0;
+  const x = i => (values.length<2?W/2:pad + i*(W-pad*2)/(values.length-1));
+  const y = v => H-pad - ((v-min)/(max-min||1))*(H-pad*2);
+  const svg = el('svg',{viewBox:'0 0 '+W+' '+H,width:W,height:H,'aria-hidden':'true'});
+  const d = values.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+  svg.appendChild(el('path',{d,fill:'none',stroke:'#CFD4DD','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round'}));
+  if(values.length>1){
+    const li=values.length-1;
+    svg.appendChild(el('path',{d:'M'+x(li-1).toFixed(1)+','+y(values[li-1]).toFixed(1)+' L'+x(li).toFixed(1)+','+y(values[li]).toFixed(1),fill:'none',stroke:'var(--series-1)','stroke-width':2,'stroke-linecap':'round'}));
+  }
+  svg.appendChild(el('circle',{cx:x(values.length-1),cy:y(values[values.length-1]),r:4,fill:'var(--series-1)',stroke:'#fff','stroke-width':2}));
+  host.appendChild(svg);
+}
+
+function renderDial(host, pct){
+  host.innerHTML='';
+  const size=112, sw=11, r=(size-sw)/2, c=2*Math.PI*r;
+  const p = clamp(pct,0,100);
+  const svg = el('svg',{viewBox:'0 0 '+size+' '+size,width:size,height:size,'aria-hidden':'true'});
+  svg.appendChild(el('circle',{cx:size/2,cy:size/2,r,fill:'none',stroke:'rgba(255,255,255,.16)','stroke-width':sw}));
+  svg.appendChild(el('circle',{cx:size/2,cy:size/2,r,fill:'none',stroke:'var(--brand)','stroke-width':sw,'stroke-linecap':'round','stroke-dasharray':c,'stroke-dashoffset':c*(1-p/100)}));
+  host.appendChild(svg);
+}
+
+/* ---------------- toast & modal ---------------- */
+let toastT;
+function toast(msg,kind){
+  const t=$('#toast');
+  t.innerHTML='<span class="ic">'+(kind==='critical'?ICON.alert:kind==='warning'?ICON.alert:ICON.check)+'</span>'+esc(msg);
+  t.classList.add('show'); clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'), kind?5200:2800);
+}
+function openModal(html){ $('#modalBox').innerHTML=html; $('#modal').classList.add('show'); }
+function closeModal(){ $('#modal').classList.remove('show'); }
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();hideTip();} });
+
+/* ---------------- selectors ---------------- */
+function fillBdrSelect(sel, opts){
+  opts=opts||{};
+  const cur = sel.value;
+  const list = opts.all ? S.bdrs : activeBdrs();
+  sel.innerHTML = list.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join('')
+    + (opts.team? '<option value="__team">Whole team</option>':'');
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value=cur;
+  else if(opts.prefer && Array.from(sel.options).some(o=>o.value===opts.prefer)) sel.value=opts.prefer;
+}
+function fillWeekSelect(sel, bdrId){
+  const cur = sel.value;
+  const weeks = loggedWeeks(bdrId==='__team'?null:bdrId);
+  sel.innerHTML = weeks.map(w=>'<option value="'+w+'">'+prettyWeek(w)+(w===weekStartOf(todayStr())?' · this week':'')+'</option>').join('');
+  if(cur && weeks.indexOf(cur)>=0) sel.value=cur;
+}
+function fillMetricSelect(sel){
+  if(sel.options.length) return;
+  sel.innerHTML = METRICS.map(m=>'<option value="'+m.key+'">'+esc(m.label)+'</option>').join('');
+  sel.value='calls';
+}
+
+/* ---------------- LOG VIEW ---------------- */
+const STEP = {calls:5, emails:5, pipeline:5000};
+let logDirty=false;
+function buildLogFields(){
+  const groups={activity:'#grpActivity',outcomes:'#grpOutcomes',coverage:'#grpCoverage'};
+  Object.entries(groups).forEach(([g,sel])=>{
+    $(sel).innerHTML = METRICS.filter(m=>m.group===g).map(m=>{
+      const st = STEP[m.key]||1;
+      return '<div class="numfield">'+
+        '<label for="f_'+m.key+'">'+esc(m.label)+'</label>'+
+        '<div class="stepper'+(m.money?' money':'')+'">'+
+          '<button type="button" data-f="'+m.key+'" data-d="-'+st+'" aria-label="Decrease '+esc(m.label)+'">&minus;</button>'+
+          '<input id="f_'+m.key+'" data-k="'+m.key+'" type="number" inputmode="numeric" min="0" step="'+st+'" value="0">'+
+          '<button type="button" data-f="'+m.key+'" data-d="'+st+'" aria-label="Increase '+esc(m.label)+'">+</button>'+
+        '</div>'+
+        '<div class="hint"><span>Daily pace <b data-pace="'+m.key+'">—</b></span><span>Week so far <b data-wk="'+m.key+'">—</b></span></div>'+
+      '</div>';
+    }).join('');
+  });
+  $$('.stepper button').forEach(b=>b.addEventListener('click',()=>{
+    const inp=$('#f_'+b.dataset.f);
+    inp.value = Math.max(0, (Number(inp.value)||0) + Number(b.dataset.d));
+    logDirty=true; updateLogHints();
+  }));
+  $$('.stepper input').forEach(i=>i.addEventListener('input',()=>{logDirty=true;updateLogHints();}));
+  $('#logNote').addEventListener('input',()=>{logDirty=true;});
+}
+function currentLogValues(){
+  const o={};
+  METRICS.forEach(m=>{ o[m.key]=Math.max(0, Number($('#f_'+m.key).value)||0); });
+  return o;
+}
+function loadLogValues(){
+  const b=$('#logBdr').value, d=$('#logDate').value;
+  const e = S.entries[entryKey(b,d)];
+  METRICS.forEach(m=>{ $('#f_'+m.key).value = e ? (Number(e[m.key])||0) : 0; });
+  $('#logNote').value = e ? (e.note||'') : '';
+  const chip=$('#logStatus');
+  if(e){ chip.className='chip good'; chip.textContent='Saved '+new Date(e.updatedAt||now()).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})+' — editing'; }
+  else { chip.className='chip'; chip.textContent='New entry'; }
+  $('#logKicker').textContent = prettyDateFull(d);
+  logDirty=false;
+  updateLogHints();
+}
+function updateLogHints(){
+  const b=$('#logBdr').value, d=$('#logDate').value;
+  const ws = weekStartOf(d), wd = clamp(Number(S.settings.workdays)||5,1,7);
+  const totals = weekTotals(b,ws);
+  const cur = currentLogValues();
+  const existing = S.entries[entryKey(b,d)];
+  METRICS.forEach(m=>{
+    const pace = Math.round((Number(S.settings.targets[m.key])||0)/wd);
+    const paceEl=document.querySelector('[data-pace="'+m.key+'"]');
+    const wkEl=document.querySelector('[data-wk="'+m.key+'"]');
+    if(paceEl) paceEl.textContent = m.money? money(pace) : fmt(pace);
+    const already = (Number(totals[m.key])||0) - (existing?Number(existing[m.key])||0:0);
+    const wk = already + (Number(cur[m.key])||0);
+    if(wkEl) wkEl.textContent = (m.money? money(wk) : fmt(wk)) + ' / ' + (m.money? money(S.settings.targets[m.key]) : fmt(S.settings.targets[m.key]));
+  });
+  const proj = Object.assign({}, totals);
+  METRICS.forEach(m=>{ proj[m.key] = (Number(totals[m.key])||0) - (existing?Number(existing[m.key])||0:0) + (Number(cur[m.key])||0); });
+  const sc = weightedScore(proj);
+  const chip=$('#dayScore');
+  chip.textContent = 'Week score ' + pctText(sc);
+  chip.className = 'chip ' + band(sc);
+}
+function saveDay(){
+  const b=$('#logBdr').value, d=$('#logDate').value;
+  if(!b||!d){ toast('Pick a BDR and a date first.','warning'); return; }
+  const vals=currentLogValues();
+  const note=$('#logNote').value.trim();
+  const empty = METRICS.every(m=>!vals[m.key]) && !note;
+  const key = entryKey(b,d);
+  if(empty){
+    if(S.entries[key]){ S.entries[key]={bdrId:b,date:d,deleted:true,updatedAt:now()}; saveLocal(); scheduleSync(); renderAll(); loadLogValues(); toast('Entry cleared for '+prettyDate(d)); }
+    else toast('Nothing to save yet — add some numbers.','warning');
+    return;
+  }
+  S.entries[key] = Object.assign({bdrId:b, date:d, note, updatedAt:now()}, vals);
+  saveLocal(); scheduleSync();
+  logDirty=false;
+  renderAll(); loadLogValues();
+  const sc = weightedScore(weekTotals(b, weekStartOf(d)));
+  $('#saveMsg').textContent = 'Saved. Week is now at '+pctText(sc)+' of target.';
+  toast('Saved '+prettyDate(d)+' for '+esc((bdr(b)||{}).name||''));
+  setTimeout(()=>{$('#saveMsg').textContent='';}, 6000);
+}
+
+/* ---------------- DASHBOARD ---------------- */
+function selectedDash(){
+  const b=$('#dashBdr').value || (activeBdrs()[0]||{}).id || 'wai';
+  const w=$('#dashWeek').value || weekStartOf(todayStr());
+  return {b,w};
+}
+function totalsFor(bdrId, week){
+  if(bdrId!=='__team') return weekTotals(bdrId, week);
+  const t = Object.fromEntries(METRICS.map(m=>[m.key,0])); t._days=0;
+  activeBdrs().forEach(b=>{ const x=weekTotals(b.id,week); METRICS.forEach(m=>t[m.key]+=x[m.key]); t._days=Math.max(t._days,x._days); });
+  return t;
+}
+function scaledTargets(bdrId){
+  const n = bdrId==='__team' ? Math.max(1, activeBdrs().length) : 1;
+  return Object.fromEntries(METRICS.map(m=>[m.key,(Number(S.settings.targets[m.key])||0)*n]));
+}
+function renderDash(){
+  const {b,w} = selectedDash();
+  const isTeam = b==='__team';
+  const totals = totalsFor(b,w);
+  const T = scaledTargets(b);
+  const wd = clamp(Number(S.settings.workdays)||5,1,7);
+
+  // score against scaled targets
+  const W = S.settings.weights;
+  let num=0,den=0;
+  METRICS.forEach(m=>{const wt=Number(W[m.key])||0, tg=Number(T[m.key])||0; if(wt<=0||tg<=0)return;
+    num+=clamp((Number(totals[m.key])||0)/tg*100,0,100)*wt; den+=wt;});
+  const score = den?num/den:0;
+
+  $('#dashKicker').textContent = (isTeam?'Whole team · ':esc((bdr(b)||{}).name||'')+' · ') + prettyWeek(w);
+  const heroEl = $('#heroScore');
+  heroEl.textContent = totals._days? pctText(score) : 'Not started';
+  heroEl.className = 'figure' + (totals._days? '' : ' empty');
+  renderDial($('#heroDial'), totals._days?score:0);
+  if(!totals._days){
+    $('#heroNote').textContent = 'Nothing logged for this week yet. Head to Log results to add a day.';
+  }else{
+    const att = METRICS.map(m=>({m, p:(Number(T[m.key])||0)>0?(Number(totals[m.key])||0)/T[m.key]*100:0}))
+      .filter(x=>(Number(W[x.m.key])||0)>0).sort((a,b2)=>a.p-b2.p);
+    const worst=att[0], best=att[att.length-1];
+    $('#heroNote').textContent = totals._days+' day'+(totals._days>1?'s':'')+' logged. Strongest: '+best.m.short+' at '+pctText(best.p)+'. Biggest gap: '+worst.m.short+' at '+pctText(worst.p)+'.';
+  }
+
+  // tiles
+  tile($('#tileMeetings'),'meetings',totals,T,b,!totals._days);
+  tile($('#tileOpps'),'opportunities',totals,T,b,!totals._days);
+  tile($('#tilePipeline'),'pipeline',totals,T,b,!totals._days);
+
+  // attainment list
+  const noData = !totals._days;
+  $('#attList').innerHTML = METRICS.map(m=>{
+    const tg=Number(T[m.key])||0, v=Number(totals[m.key])||0;
+    const p = tg>0? v/tg*100 : 0, bd= noData? 'none' : band(p);
+    return '<div class="r"><div class="l"><span>'+esc(m.label)+'</span><b>'+ (m.money?money(v):fmt(v)) +' <span style="color:var(--muted);font-weight:500">/ '+(m.money?money(tg):fmt(tg))+'</span> · <span class="pct '+bd+'">'+pctText(p)+'</span></b></div>'+
+      '<div class="meter"><i class="'+bd+'" style="width:'+clamp(p,0,100).toFixed(1)+'%"></i></div></div>';
+  }).join('');
+
+  // daily chart
+  const mk = $('#dashMetric').value||'calls', md = MKEY[mk];
+  const nB = isTeam? Math.max(1,activeBdrs().length) : 1;
+  const pace = (Number(S.settings.targets[mk])||0)/wd*nB;
+  const days = [];
+  for(let i=0;i<7;i++){
+    const d = addDays(w,i);
+    let v=0, has=false;
+    if(isTeam){ activeBdrs().forEach(x=>{const e=S.entries[entryKey(x.id,d)]; if(e){has=true;v+=Number(e[mk])||0;}}); }
+    else { const e=S.entries[entryKey(b,d)]; if(e){has=true;v=Number(e[mk])||0;} }
+    days.push({label:DOW[i], value:v, tip:prettyDateFull(d), dim:i>4&&!has, note:has?null:'Not logged'});
+  }
+  $('#chartTitle').textContent = md.label+' this week, by day';
+  $('#chartSub').textContent = 'Against the daily pace needed to hit '+ (md.money?money(Number(S.settings.targets[mk])*nB):fmt(Number(S.settings.targets[mk])*nB)) +' for the week';
+  drawColumns($('#chartDaily'), days, {target:pace, money:!!md.money, fmt:v=>md.money?moneyFull(v):fmt(v), name:md.short, targetName:'Daily pace', aria:md.label+' by day', height:300});
+
+  // trend chart
+  const weeks = recentWeeks(8);
+  const trows = weeks.map(wk=>{
+    const t = totalsFor(b,wk);
+    return {label:parseYmd(wk).toLocaleDateString('en-AU',{day:'numeric',month:'short'}), value:Number(t[mk])||0, tip:prettyWeek(wk), dim:wk===w?false:false};
+  });
+  $('#trendTitle').textContent = md.label+' week on week';
+  drawColumns($('#chartTrend'), trows, {target:Number(S.settings.targets[mk])*nB, money:!!md.money, fmt:v=>md.money?moneyFull(v):fmt(v), name:md.short, targetName:'Weekly target', aria:md.label+' by week', height:236});
+
+  // leaderboard
+  const lb = activeBdrs().map(x=>{const t=weekTotals(x.id,w);return {x,t,s:weightedScore(t),d:t._days};})
+    .sort((a,b2)=> b2.s-a.s || b2.t.meetings-a.t.meetings);
+  $('#leaderboard').innerHTML = lb.length? lb.map((r,i)=>
+    '<div class="lbrow"><span class="rank">'+(i+1)+'</span>'+
+    '<span class="av'+(r.d?'':' ghost')+'">'+esc(initials(r.x.name))+'</span>'+
+    '<span class="n"><b>'+esc(r.x.name)+'</b><small>'+(r.d? r.d+' day'+(r.d>1?'s':'')+' logged · '+fmt(r.t.meetings)+' meetings' : 'No results this week')+'</small></span>'+
+    '<span class="sc" style="color:'+(r.d?'var(--ink)':'var(--muted)')+'">'+(r.d?pctText(r.s):'—')+'</span></div>'
+  ).join('') : '<div class="empty"><p>No active BDRs yet.</p></div>';
+
+  // daily detail table
+  const cols = METRICS;
+  const rowsHtml = [];
+  for(let i=0;i<7;i++){
+    const d=addDays(w,i);
+    const list = isTeam? activeBdrs().map(x=>S.entries[entryKey(x.id,d)]).filter(Boolean) : [S.entries[entryKey(b,d)]].filter(Boolean);
+    if(!list.length) continue;
+    const agg = Object.fromEntries(cols.map(m=>[m.key, list.reduce((s,e)=>s+(Number(e[m.key])||0),0)]));
+    rowsHtml.push('<tr><td class="name"><b>'+DOW[i]+'</b> <span style="color:var(--muted)">'+prettyDate(d)+'</span></td>'+
+      cols.map(m=>'<td class="num">'+(agg[m.key]? (m.money?moneyFull(agg[m.key]):fmt(agg[m.key])) : '<span style="color:var(--muted)">0</span>')+'</td>').join('')+'</tr>');
+  }
+  const tot = cols.map(m=>'<td class="num"><b>'+(MKEY[m.key].money?moneyFull(totals[m.key]):fmt(totals[m.key]))+'</b></td>').join('');
+  $('#dailyTable').innerHTML =
+    '<thead><tr><th class="name">Day</th>'+cols.map(m=>'<th class="num">'+esc(m.short)+'</th>').join('')+'</tr></thead>'+
+    '<tbody>'+(rowsHtml.join('')||'<tr><td class="name" colspan="'+(cols.length+1)+'" style="color:var(--muted);padding:22px 12px">No entries logged in this week yet.</td></tr>')+'</tbody>'+
+    (rowsHtml.length?'<tfoot><tr><td class="name"><b>Week total</b></td>'+tot+'</tr></tfoot>':'');
+  $('#detailSub').textContent = rowsHtml.length+' day'+(rowsHtml.length===1?'':'s')+' logged · '+prettyWeek(w);
+}
+function tile(host, key, totals, T, bdrId, noData){
+  const m=MKEY[key], v=Number(totals[key])||0, tg=Number(T[key])||0;
+  const p = tg>0? v/tg*100 : 0, bd= noData? 'none' : band(p);
+  const weeks = recentWeeks(8).map(wk=>Number(totalsFor(bdrId,wk)[key])||0);
+  const anyHistory = weeks.some(x=>x>0);
+  host.innerHTML =
+    '<span class="lab">'+esc(m.label)+'</span>'+
+    '<div class="val">'+(m.money?money(v):fmt(v))+' <em>/ '+(m.money?money(tg):fmt(tg))+'</em></div>'+
+    '<div class="meter"><i class="'+bd+'" style="width:'+clamp(p,0,100).toFixed(1)+'%"></i></div>'+
+    (anyHistory?'<div class="spark"></div>':'')+
+    '<div class="foot"><span class="pct '+bd+'">'+(noData?'':'<span class="ic">'+statusIcon(bd)+'</span>')+(noData?'Nothing logged yet':pctText(p)+' of target')+'</span></div>';
+  if(anyHistory) drawSpark(host.querySelector('.spark'), weeks);
+}
+
+/* ---------------- WEEKLY REVIEW ---------------- */
+function renderWeek(){
+  const b=$('#weekBdr').value||(activeBdrs()[0]||{}).id, w=$('#weekPick').value||weekStartOf(todayStr());
+  const totals = weekTotals(b,w), T=S.settings.targets, W=S.settings.weights;
+  const score = weightedScore(totals);
+  const chip=$('#weekScoreChip'); chip.textContent = totals._days? 'Weighted score '+pctText(score):'No results logged';
+  chip.className='chip '+(totals._days?band(score):'');
+
+  let den=0; METRICS.forEach(m=>{if((Number(W[m.key])||0)>0&&(Number(T[m.key])||0)>0)den+=Number(W[m.key])});
+  $('#weekTable').innerHTML =
+    '<thead><tr><th class="name">Metric</th><th class="num">Target</th><th class="num">Actual</th><th class="num">Attainment</th><th class="num">Weight</th><th class="num">Contribution</th></tr></thead><tbody>'+
+    METRICS.map(m=>{
+      const tg=Number(T[m.key])||0, v=Number(totals[m.key])||0;
+      const p = tg>0? v/tg*100:0, bd=band(p);
+      const wt=Number(W[m.key])||0;
+      const contrib = (den>0&&tg>0)? clamp(p,0,100)*wt/den : 0;
+      return '<tr><td class="name">'+esc(m.label)+'</td>'+
+        '<td class="num">'+(m.money?moneyFull(tg):fmt(tg))+'</td>'+
+        '<td class="num"><b>'+(m.money?moneyFull(v):fmt(v))+'</b></td>'+
+        '<td class="num"><span class="chip '+bd+'">'+pctText(p)+'</span></td>'+
+        '<td class="num">'+(den>0?(wt/den*100).toFixed(0):'0')+'%</td>'+
+        '<td class="num">'+contrib.toFixed(1)+'</td></tr>';
+    }).join('')+'</tbody>'+
+    '<tfoot><tr><td class="name"><b>Weighted score</b></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"><b>'+pctText(score)+'</b></td></tr></tfoot>';
+
+  const r = S.reviews[entryKey(b,w)]||{};
+  $('#nWorked').value=r.worked||''; $('#nBlocker').value=r.blocker||'';
+  $('#nChange').value=r.change||''; $('#nPriority').value=r.priority||'';
+  $('#confidence').innerHTML=[1,2,3,4,5].map(n=>'<button type="button" data-c="'+n+'" aria-pressed="'+(Number(r.confidence)===n)+'">'+n+'</button>').join('');
+  $$('#confidence button').forEach(btn=>btn.addEventListener('click',()=>{
+    $$('#confidence button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    btn.setAttribute('aria-pressed','true');
+  }));
+
+  const past = Object.values(S.reviews).filter(x=>x.bdrId===b && x.week!==w).sort((a,c)=>c.week.localeCompare(a.week)).slice(0,6);
+  $('#pastNotes').innerHTML = past.length? past.map(x=>{
+    const t=weekTotals(x.bdrId,x.week);
+    return '<div style="padding:14px 0;border-top:1px solid var(--line)">'+
+      '<div class="head" style="margin-bottom:10px"><div><h3 style="font-size:14px">'+prettyWeek(x.week)+'</h3><span class="sub">'+fmt(t.meetings)+' meetings · '+fmt(t.calls)+' calls · '+(t._days||0)+' days logged</span></div>'+
+      '<span class="chip '+band(weightedScore(t))+'">'+pctText(weightedScore(t))+(x.confidence?' · confidence '+x.confidence+'/5':'')+'</span></div>'+
+      '<div class="notegrid">'+
+      noteBox('What worked',x.worked)+noteBox('Biggest blocker',x.blocker)+
+      noteBox('Change for next week',x.change)+noteBox('Priority / focus',x.priority)+
+      '</div></div>';
+  }).join('') : '<div class="empty"><p>No previous weekly reviews yet.</p></div>';
+}
+function noteBox(t,v){return '<div class="notebox"><b>'+esc(t)+'</b><p'+(v?'':' class="empty"')+'>'+esc(v||'Not filled in')+'</p></div>';}
+function saveWeekReview(){
+  const b=$('#weekBdr').value, w=$('#weekPick').value;
+  const conf = ($$('#confidence button').find(x=>x.getAttribute('aria-pressed')==='true')||{}).dataset;
+  S.reviews[entryKey(b,w)] = {
+    bdrId:b, week:w,
+    worked:$('#nWorked').value.trim(), blocker:$('#nBlocker').value.trim(),
+    change:$('#nChange').value.trim(), priority:$('#nPriority').value.trim(),
+    confidence: conf? Number(conf.c): null, updatedAt:now()
+  };
+  saveLocal(); scheduleSync(); renderAll();
+  $('#weekMsg').textContent='Saved.'; setTimeout(()=>$('#weekMsg').textContent='',4000);
+  toast('Weekly review saved for '+prettyWeek(w));
+}
+
+/* ---------------- TEAM ---------------- */
+function renderTeam(){
+  const w = $('#dashWeek').value || weekStartOf(todayStr());
+  $('#teamSub').textContent = prettyWeek(w);
+  $('#roster').innerHTML = S.bdrs.map(b=>
+    '<div class="rosteritem'+(b.active?'':' open')+'">'+
+      '<span class="av'+(b.active?'':' ghost')+'">'+esc(initials(b.name))+'</span>'+
+      '<span class="grow"><b>'+esc(b.name)+'</b><small>'+esc(b.role||'')+'</small></span>'+
+      '<span class="chip '+(b.active?'good':'')+'">'+(b.active?'Active':'Open seat')+'</span>'+
+      '<button class="btn sm" data-edit="'+esc(b.id)+'" type="button">Edit</button>'+
+    '</div>').join('');
+  $$('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>editBdr(btn.dataset.edit)));
+
+  const n = Math.max(1, activeBdrs().length);
+  const tt = totalsFor('__team', w);
+  $('#teamTotals').innerHTML = METRICS.filter(m=>['meetings','opportunities','pipeline','conversations','calls'].indexOf(m.key)>=0).map(m=>{
+    const tg=(Number(S.settings.targets[m.key])||0)*n, v=Number(tt[m.key])||0;
+    const p=tg>0?v/tg*100:0, bd=band(p);
+    return '<div class="r"><div class="l"><span>'+esc(m.label)+'</span><b>'+(m.money?money(v):fmt(v))+' <span style="color:var(--muted);font-weight:500">/ '+(m.money?money(tg):fmt(tg))+'</span></b></div><div class="meter"><i class="'+bd+'" style="width:'+clamp(p,0,100).toFixed(1)+'%"></i></div></div>';
+  }).join('');
+
+  $('#teamTable').innerHTML =
+    '<thead><tr><th class="name">BDR</th><th class="num">Weeks</th><th class="num">Days logged</th><th class="num">Meetings</th><th class="num">Opps</th><th class="num">Pipeline</th><th class="num">Calls</th><th class="num">Conversations</th><th class="num">Avg score</th></tr></thead><tbody>'+
+    S.bdrs.map(b=>{
+      const weeks = loggedWeeks(b.id).filter(wk=>weekTotals(b.id,wk)._days>0);
+      if(!weeks.length) return '<tr><td class="name">'+esc(b.name)+'</td><td class="num">0</td><td class="num">0</td>'+'<td class="num" style="color:var(--muted)">—</td>'.repeat(5)+'<td class="num" style="color:var(--muted)">—</td></tr>';
+      const agg={}; METRICS.forEach(m=>agg[m.key]=0); let days=0, sSum=0;
+      weeks.forEach(wk=>{const t=weekTotals(b.id,wk); METRICS.forEach(m=>agg[m.key]+=t[m.key]); days+=t._days; sSum+=weightedScore(t);});
+      const avg=sSum/weeks.length;
+      return '<tr><td class="name"><b>'+esc(b.name)+'</b></td><td class="num">'+weeks.length+'</td><td class="num">'+days+'</td>'+
+        '<td class="num">'+fmt(agg.meetings)+'</td><td class="num">'+fmt(agg.opportunities)+'</td><td class="num">'+moneyFull(agg.pipeline)+'</td>'+
+        '<td class="num">'+fmt(agg.calls)+'</td><td class="num">'+fmt(agg.conversations)+'</td>'+
+        '<td class="num"><span class="chip '+band(avg)+'">'+pctText(avg)+'</span></td></tr>';
+    }).join('')+'</tbody>';
+}
+function editBdr(id){
+  const b = id? bdr(id) : {id:uid(), name:'', role:'BDR', active:true};
+  openModal(
+    '<h3>'+(id?'Edit BDR':'Add BDR')+'</h3>'+
+    '<p class="lede">Give the seat a name when the person starts. Open seats stay on the roster but are left out of averages.</p>'+
+    '<div class="fld" style="margin-bottom:12px"><label for="mName">Name</label><input id="mName" value="'+esc(b.name)+'" placeholder="e.g. Wai"></div>'+
+    '<div class="fld" style="margin-bottom:12px"><label for="mRole">Role / patch</label><input id="mRole" value="'+esc(b.role||'')+'" placeholder="e.g. BDR — ANZ"></div>'+
+    '<div class="fld" style="margin-bottom:18px"><label for="mActive">Status</label><select id="mActive"><option value="1"'+(b.active?' selected':'')+'>Active — counts in the team view</option><option value="0"'+(!b.active?' selected':'')+'>Open seat — not yet hired</option></select></div>'+
+    '<div class="actions"><button class="btn primary" id="mSave" type="button">Save</button><button class="btn ghost" id="mCancel" type="button">Cancel</button>'+
+    (id?'<div class="spacer"></div><button class="btn" id="mDel" type="button" style="color:var(--critical-ink);border-color:#F0C9C9">Remove</button>':'')+'</div>'
+  );
+  $('#mCancel').addEventListener('click',closeModal);
+  $('#mSave').addEventListener('click',()=>{
+    const name=$('#mName').value.trim();
+    if(!name){ toast('Give this seat a name.','warning'); return; }
+    const rec={id:b.id, name, role:$('#mRole').value.trim(), active:$('#mActive').value==='1', updatedAt:now()};
+    const i=S.bdrs.findIndex(x=>x.id===b.id);
+    if(i>=0) S.bdrs[i]=rec; else S.bdrs.push(rec);
+    saveLocal(); scheduleSync(); closeModal(); renderAll(); toast('Saved '+name);
+  });
+  if(id) $('#mDel').addEventListener('click',()=>{
+    if(!confirm('Remove '+b.name+' from the roster? Their logged results stay in the data and in exports.')) return;
+    const i=S.bdrs.findIndex(x=>x.id===b.id);
+    if(i>=0) S.bdrs[i]=Object.assign({},S.bdrs[i],{deleted:true,updatedAt:now()});
+    S.bdrs = S.bdrs.filter(x=>!x.deleted);
+    if(!S.bdrs.length) S.bdrs = blankState().bdrs;
+    saveLocal(); scheduleSync(); closeModal(); renderAll(); toast('Removed from roster');
+  });
+}
+
+/* ---------------- TARGETS ---------------- */
+function renderTargets(){
+  const T=S.settings.targets, W=S.settings.weights, wd=clamp(Number(S.settings.workdays)||5,1,7);
+  let den=0; METRICS.forEach(m=>den+=Number(W[m.key])||0);
+  $('#weightSum').textContent = 'Weights total '+den;
+  $('#workdays').value = wd;
+  $('#targetTable').innerHTML =
+    '<thead><tr><th class="name">Metric</th><th class="num">Weekly target</th><th class="num">Daily pace</th><th class="num">Weight</th><th class="num">Share of score</th></tr></thead><tbody>'+
+    METRICS.map(m=>{
+      const tg=Number(T[m.key])||0, wt=Number(W[m.key])||0;
+      return '<tr><td class="name"><b>'+esc(m.label)+'</b>'+(m.money?' <span style="color:var(--muted)">(AUD)</span>':'')+'</td>'+
+        '<td class="num"><input type="number" min="0" step="'+(STEP[m.key]||1)+'" data-t="'+m.key+'" value="'+tg+'" style="width:120px;text-align:right;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-variant-numeric:tabular-nums"></td>'+
+        '<td class="num" data-pacecell="'+m.key+'">'+(m.money?money(Math.round(tg/wd)):fmt(Math.round(tg/wd)))+'</td>'+
+        '<td class="num"><input type="number" min="0" step="1" data-w="'+m.key+'" value="'+wt+'" style="width:78px;text-align:right;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-variant-numeric:tabular-nums"></td>'+
+        '<td class="num">'+(den>0?(wt/den*100).toFixed(0):'0')+'%</td></tr>';
+    }).join('')+'</tbody>';
+}
+function saveTargets(){
+  const T={},W={};
+  $$('[data-t]').forEach(i=>T[i.dataset.t]=Math.max(0,Number(i.value)||0));
+  $$('[data-w]').forEach(i=>W[i.dataset.w]=Math.max(0,Number(i.value)||0));
+  S.settings.targets=Object.assign({},DEFAULT_TARGETS,T);
+  S.settings.weights=Object.assign({},DEFAULT_WEIGHTS,W);
+  S.settings.workdays=clamp(Number($('#workdays').value)||5,1,7);
+  S.settings.updatedAt=now();
+  saveLocal(); scheduleSync(); renderAll(); toast('Targets saved');
+}
+
+/* ---------------- DATA & SHARING ---------------- */
+function renderSyncBadge(){
+  const dot=$('#syncDot'), lab=$('#syncLabel'), note=$('#syncNote'), btn=$('#syncBtn');
+  const c=parseCode(PREFS.code);
+  if(!c){ dot.className='syncdot'; lab.textContent='This device only'; note.textContent='Your entries are saved on this device. Connect a team code to share them.'; btn.textContent='Set up sharing'; return; }
+  btn.textContent='Sync now';
+  if(SYNC.state==='ok'){ dot.className='syncdot ok'; lab.textContent='Shared workspace'; note.textContent='In sync'+(SYNC.lastOk?' · '+new Date(SYNC.lastOk).toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'}):''); }
+  else if(SYNC.state==='syncing'){ dot.className='syncdot warn'; lab.textContent='Syncing…'; note.textContent=SYNC.msg||'Talking to the shared workspace.'; }
+  else if(SYNC.state==='err'){ dot.className='syncdot err'; lab.textContent='Sync problem'; note.textContent='Your data is safe on this device. '+esc(SYNC.msg); }
+  else { dot.className='syncdot warn'; lab.textContent='Connected'; note.textContent='Not synced yet this session.'; }
+}
+function renderSyncPanel(){
+  const c=parseCode(PREFS.code);
+  $('#syncPanel').innerHTML = c
+    ? '<p class="note" style="margin:0 0 12px">Share this team code with anyone who should see or add results. They paste it into <b>Set up sharing</b> on their own device.</p>'+
+      '<div class="codebox"><span id="codeTxt">'+esc(PREFS.code)+'</span><button class="btn sm" id="copyCode" type="button">Copy</button></div>'+
+      '<div class="actions" style="margin-top:14px"><button class="btn" id="pullNow" type="button">Pull latest</button><button class="btn" id="pushNow" type="button">Push my changes</button><button class="btn" id="shareLink" type="button">Copy invite link</button></div>'+
+      '<p class="note">Everyone works offline-first: entries save on the device straight away and merge into the shared copy on the next sync. The newest edit of a given day wins.</p>'
+    : '<p class="note" style="margin:0 0 14px">Right now this tracker only lives on this device. Create a shared workspace to get a team code, then send that code to Wai.</p>'+
+      '<div class="actions"><button class="btn primary" id="mkWorkspace" type="button">Create shared workspace</button><button class="btn" id="joinWorkspace" type="button">I already have a code</button></div>'+
+      '<div class="callout" style="margin-top:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18.2A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><div>The shared workspace uses a free third-party JSON store, reachable by anyone who has the code. Keep it to activity metrics — no customer names or anything confidential. If that is not acceptable, use <b>Backup &amp; restore</b> instead and swap files.</div></div>';
+  if(c){
+    $('#copyCode').addEventListener('click',()=>copyText(PREFS.code,'Team code copied'));
+    $('#pullNow').addEventListener('click',()=>pull(false));
+    $('#pushNow').addEventListener('click',()=>push(false));
+    $('#shareLink').addEventListener('click',()=>{
+      const u=location.origin+location.pathname+'#code='+encodeURIComponent(PREFS.code);
+      copyText(u,'Invite link copied — send it with the file');
+    });
+  }else{
+    $('#mkWorkspace').addEventListener('click',doCreateWorkspace);
+    $('#joinWorkspace').addEventListener('click',promptJoin);
+  }
+}
+function copyText(t,msg){
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>toast(msg)).catch(()=>fallbackCopy(t,msg)); }
+  else fallbackCopy(t,msg);
+}
+function fallbackCopy(t,msg){
+  const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast(msg); }catch(e){ prompt('Copy this:',t); }
+  document.body.removeChild(ta);
+}
+async function doCreateWorkspace(){
+  const btn=$('#mkWorkspace'); if(btn){btn.disabled=true;btn.textContent='Creating…';}
+  try{
+    const code = await createWorkspace();
+    PREFS.code=code; savePrefs(); SYNC.lastOk=now(); setSync('ok','');
+    renderAll();
+    openModal('<h3>Shared workspace created</h3><p class="lede">Send this code to Wai. On his device he opens the same file, clicks <b>Set up sharing</b> and pastes it in.</p>'+
+      '<div class="codebox"><span>'+esc(code)+'</span></div>'+
+      '<div class="actions" style="margin-top:16px"><button class="btn primary" id="mCopy" type="button">Copy code</button><button class="btn ghost" id="mClose" type="button">Done</button></div>');
+    $('#mCopy').addEventListener('click',()=>copyText(code,'Team code copied'));
+    $('#mClose').addEventListener('click',closeModal);
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Create shared workspace';}
+    openModal('<h3>Could not create a shared workspace</h3><p class="lede">Both storage services were unreachable from this browser. This is usually a corporate network or extension blocking them.</p>'+
+      '<div class="codebox" style="font-size:12px">'+esc(e.message)+'</div>'+
+      '<p class="lede" style="margin-top:14px">Everything still works on this device. To share results in the meantime, use <b>Backup &amp; restore</b> on the Data page — export a JSON file, send it over, and the other person restores it.</p>'+
+      '<div class="actions"><button class="btn primary" id="mClose2" type="button">OK</button></div>');
+    $('#mClose2').addEventListener('click',closeModal);
+  }
+}
+function promptJoin(){
+  openModal('<h3>Join a shared workspace</h3><p class="lede">Paste the team code you were sent. Anything already on this device is merged in, not overwritten.</p>'+
+    '<div class="fld" style="margin-bottom:16px"><label for="jCode">Team code</label><input id="jCode" placeholder="ec-XXXXXXXX" autocomplete="off" spellcheck="false"></div>'+
+    '<div class="actions"><button class="btn primary" id="jGo" type="button">Connect</button><button class="btn ghost" id="jCancel" type="button">Cancel</button></div>');
+  $('#jCancel').addEventListener('click',closeModal);
+  $('#jGo').addEventListener('click',async ()=>{
+    const code=$('#jCode').value.trim();
+    if(!parseCode(code)){ toast('That does not look like a team code.','warning'); return; }
+    PREFS.code=code; savePrefs(); closeModal();
+    await pull(false);
+    if(SYNC.state==='ok'){ await push(true); toast('Connected to the shared workspace'); }
+    renderAll();
+  });
+  setTimeout(()=>{const i=$('#jCode'); if(i) i.focus();},50);
+}
+
+/* ---------------- export / import ---------------- */
+function download(name, text, mime){
+  const blob=new Blob([text],{type:mime||'text/plain;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function csvCell(v){ const s=String(v==null?'':v); return /[",\n]/.test(s)? '"'+s.replace(/"/g,'""')+'"' : s; }
+function toCsv(rows){ return rows.map(r=>r.map(csvCell).join(',')).join('\r\n'); }
+function exportDailyCsv(){
+  const rows=[['BDR','Date','Week commencing',...METRICS.map(m=>m.label),'Note']];
+  Object.values(S.entries).sort((a,b)=>(a.bdrId+a.date).localeCompare(b.bdrId+b.date)).forEach(e=>{
+    rows.push([ (bdr(e.bdrId)||{}).name||e.bdrId, e.date, weekStartOf(e.date), ...METRICS.map(m=>Number(e[m.key])||0), e.note||'' ]);
+  });
+  download('uipath-bdr-daily-'+todayStr()+'.csv', toCsv(rows), 'text/csv;charset=utf-8');
+  toast('Daily entries exported');
+}
+function exportWeeklyCsv(onlyWeek){
+  const head=['BDR','Week commencing','Days logged'];
+  METRICS.forEach(m=>{head.push(m.label+' actual', m.label+' target', m.label+' %');});
+  head.push('Weighted score %','What worked','Blocker','Change next week','Priority','Confidence');
+  const rows=[head];
+  S.bdrs.forEach(b=>{
+    const weeks = onlyWeek? [onlyWeek] : loggedWeeks(b.id);
+    weeks.forEach(w=>{
+      const t=weekTotals(b.id,w); if(!t._days && !S.reviews[entryKey(b.id,w)]) return;
+      const r=S.reviews[entryKey(b.id,w)]||{};
+      const line=[b.name,w,t._days];
+      METRICS.forEach(m=>{const tg=Number(S.settings.targets[m.key])||0,v=Number(t[m.key])||0;
+        line.push(v,tg,tg>0?(v/tg*100).toFixed(1):'');});
+      line.push(weightedScore(t).toFixed(1), r.worked||'', r.blocker||'', r.change||'', r.priority||'', r.confidence||'');
+      rows.push(line);
+    });
+  });
+  download('uipath-bdr-weekly-'+todayStr()+'.csv', toCsv(rows), 'text/csv;charset=utf-8');
+  toast('Weekly roll-up exported');
+}
+function exportJson(){
+  download('uipath-bdr-backup-'+todayStr()+'.json', JSON.stringify(payload(),null,2),'application/json');
+  toast('Backup downloaded');
+}
+function importJson(file){
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const j=JSON.parse(fr.result);
+      const remote=normalise(unwrap(j));
+      S=mergeState(S,remote); saveLocal(); scheduleSync(); renderAll();
+      toast('Backup merged in');
+    }catch(e){ toast('That file could not be read as a backup.','critical'); }
+  };
+  fr.readAsText(file);
+}
+
+/* ---------------- navigation & render ---------------- */
+let VIEW='log';
+function go(v){
+  VIEW=v;
+  $$('.view').forEach(s=>s.classList.toggle('on', s.id==='view-'+v));
+  $$('#nav button').forEach(b=>{ if(b.dataset.view===v) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  window.scrollTo({top:0,behavior:'instant'});
+  renderAll();
+}
+let rafT;
+function renderAll(){
+  cancelAnimationFrame(rafT);
+  rafT = requestAnimationFrame(()=>{
+    // selectors
+    fillBdrSelect($('#logBdr'), {prefer:PREFS.me});
+    fillBdrSelect($('#dashBdr'), {team:true, prefer:PREFS.me});
+    fillBdrSelect($('#weekBdr'), {prefer:PREFS.me});
+    fillBdrSelect($('#meSelect'), {all:true, prefer:PREFS.me});
+    if(PREFS.me && Array.from($('#meSelect').options).some(o=>o.value===PREFS.me)) $('#meSelect').value=PREFS.me;
+    const me = bdr($('#meSelect').value);
+    $('#meAv').textContent = initials(me?me.name:'');
+    fillWeekSelect($('#dashWeek'), $('#dashBdr').value);
+    fillWeekSelect($('#weekPick'), $('#weekBdr').value);
+    fillMetricSelect($('#dashMetric'));
+
+    if(!logDirty) loadLogValues(); else updateLogHints();
+    renderSyncBadge();
+    if(VIEW==='dash') renderDash();
+    if(VIEW==='week') renderWeek();
+    if(VIEW==='team') renderTeam();
+    if(VIEW==='targets') renderTargets();
+    if(VIEW==='data') renderSyncPanel();
+  });
+}
+
+/* ---------------- init ---------------- */
+function init(){
+  loadLocal();
+
+  // invite link: #code=...
+  if(location.hash.indexOf('code=')>=0){
+    const c=decodeURIComponent(location.hash.split('code=')[1].split('&')[0]);
+    if(parseCode(c) && c!==PREFS.code){ PREFS.code=c; savePrefs(); }
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+  if(!PREFS.me) PREFS.me = (activeBdrs()[0]||S.bdrs[0]||{}).id||'wai';
+
+  buildLogFields();
+  $('#logDate').value = todayStr();
+
+  $$('#nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
+  $$('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+
+  $('#logBdr').addEventListener('change',()=>{logDirty=false;loadLogValues();});
+  $('#logDate').addEventListener('change',()=>{logDirty=false;loadLogValues();});
+  $('#logToday').addEventListener('click',()=>{$('#logDate').value=todayStr();logDirty=false;loadLogValues();});
+  $('#logYesterday').addEventListener('click',()=>{$('#logDate').value=addDays(todayStr(),-1);logDirty=false;loadLogValues();});
+  $('#saveDay').addEventListener('click',saveDay);
+  $('#clearDay').addEventListener('click',()=>{METRICS.forEach(m=>$('#f_'+m.key).value=0);$('#logNote').value='';logDirty=true;updateLogHints();});
+
+  $('#meSelect').addEventListener('change',()=>{
+    PREFS.me=$('#meSelect').value; savePrefs();
+    $('#logBdr').value=PREFS.me; $('#dashBdr').value=PREFS.me; $('#weekBdr').value=PREFS.me;
+    logDirty=false; renderAll();
+  });
+
+  ['#dashBdr','#dashWeek','#dashMetric'].forEach(s=>$(s).addEventListener('change',()=>{
+    if(s==='#dashBdr') fillWeekSelect($('#dashWeek'), $('#dashBdr').value);
+    renderDash();
+  }));
+  ['#weekBdr','#weekPick'].forEach(s=>$(s).addEventListener('change',()=>{
+    if(s==='#weekBdr') fillWeekSelect($('#weekPick'), $('#weekBdr').value);
+    renderWeek();
+  }));
+  $('#saveWeek').addEventListener('click',saveWeekReview);
+  $('#addBdr').addEventListener('click',()=>editBdr(null));
+  $('#saveTargets').addEventListener('click',saveTargets);
+  $('#resetTargets').addEventListener('click',()=>{
+    if(!confirm('Restore the default targets and weights?')) return;
+    S.settings.targets={...DEFAULT_TARGETS}; S.settings.weights={...DEFAULT_WEIGHTS};
+    S.settings.workdays=5; S.settings.updatedAt=now();
+    saveLocal(); scheduleSync(); renderAll(); toast('Defaults restored');
+  });
+  $('#workdays').addEventListener('change',()=>{ renderTargets(); });
+  $('#syncBtn').addEventListener('click',()=>{
+    if(parseCode(PREFS.code)) push(false); else { go('data'); setTimeout(()=>{const b=$('#mkWorkspace'); if(b) b.focus();},200); }
+  });
+  $('#exportWeek').addEventListener('click',()=>exportWeeklyCsv($('#dashWeek').value));
+  $('#exportAll').addEventListener('click',()=>exportWeeklyCsv(null));
+  $('#csvDaily').addEventListener('click',exportDailyCsv);
+  $('#csvWeekly').addEventListener('click',()=>exportWeeklyCsv(null));
+  $('#dlJson').addEventListener('click',exportJson);
+  $('#upJson').addEventListener('click',()=>$('#fileJson').click());
+  $('#fileJson').addEventListener('change',e=>{ if(e.target.files[0]) importJson(e.target.files[0]); e.target.value=''; });
+  $('#disconnect').addEventListener('click',()=>{
+    if(!parseCode(PREFS.code)){ toast('Not connected to a shared workspace.','warning'); return; }
+    if(!confirm('Disconnect this device? Your data stays here, but new entries will no longer be shared.')) return;
+    PREFS.code=''; savePrefs(); setSync('off',''); renderAll(); toast('Disconnected');
+  });
+  $('#wipe').addEventListener('click',()=>{
+    if(!confirm('Erase every entry stored on this device? This cannot be undone.')) return;
+    if(!confirm('Really erase? Take a backup first if you are not sure.')) return;
+    S=blankState(); saveLocal(); renderAll(); toast('Local data erased');
+  });
+  $('#toggleTable').addEventListener('click',()=>{
+    const wrap=$('#dailyTable').closest('.tablewrap');
+    const hidden = wrap.style.display==='none';
+    wrap.style.display = hidden? '' : 'none';
+    $('#toggleTable').textContent = hidden? 'Hide table' : 'Show table';
+  });
+
+  let rt; window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(VIEW==='dash')renderDash();},180);});
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden && parseCode(PREFS.code)) pull(true); });
+  window.addEventListener('beforeunload',e=>{ if(logDirty){ e.preventDefault(); e.returnValue=''; } });
+
+  go('log');
+  if(parseCode(PREFS.code)){ pull(true); setInterval(()=>{ if(!document.hidden) pull(true); }, 60000); }
+  else setSync('off','');
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+</script>
+</body>
+</html>
